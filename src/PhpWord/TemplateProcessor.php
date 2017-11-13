@@ -84,27 +84,6 @@ class TemplateProcessor
     protected $tempDocumentNewImages = array();
 
     /**
-     * @since 0.12.0 Throws CreateTemporaryFileException and CopyFileException instead of Exception
-     *
-     * @var string[]
-     */
-    protected $tempDocumentRelations = array();
-
-    /**
-     * Document content types (in XML format) of the temporary document.
-     *
-     * @var string
-     */
-    protected $tempDocumentContentTypes = "";
-
-    /**
-     * new inserted images list
-     *
-     * @var string[]
-     */
-    protected $tempDocumentNewImages = array();
-
-    /**
      *
      * @param string $documentTemplate The fully qualified template filename
      *
