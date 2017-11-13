@@ -10,8 +10,8 @@
  * file that was distributed with this source code. For the full list of
  * contributors, visit https://github.com/PHPOffice/PHPWord/contributors.
  *
- * @link        https://github.com/PHPOffice/PHPWord
- * @copyright   2010-2016 PHPWord contributors
+ * @see         https://github.com/PHPOffice/PHPWord
+ * @copyright   2010-2017 PHPWord contributors
  * @license     http://www.gnu.org/licenses/lgpl.txt LGPL version 3
  */
 
@@ -37,26 +37,26 @@ class TemplateProcessor
     protected $zipClass;
 
     /**
-     * @var string Temporary document filename (with path).
+     * @var string Temporary document filename (with path)
      */
     protected $tempDocumentFilename;
 
     /**
-     * Content of main document part (in XML format) of the temporary document.
+     * Content of main document part (in XML format) of the temporary document
      *
      * @var string
      */
     protected $tempDocumentMainPart;
 
     /**
-     * Content of headers (in XML format) of the temporary document.
+     * Content of headers (in XML format) of the temporary document
      *
      * @var string[]
      */
     protected $tempDocumentHeaders = array();
 
     /**
-     * Content of footers (in XML format) of the temporary document.
+     * Content of footers (in XML format) of the temporary document
      *
      * @var string[]
      */
@@ -84,9 +84,29 @@ class TemplateProcessor
     protected $tempDocumentNewImages = array();
 
     /**
-     * @since 0.12.0 Throws CreateTemporaryFileException and CopyFileException instead of Exception.
+     * @since 0.12.0 Throws CreateTemporaryFileException and CopyFileException instead of Exception
      *
-     * @param string $documentTemplate The fully qualified template filename.
+     * @var string[]
+     */
+    protected $tempDocumentRelations = array();
+
+    /**
+     * Document content types (in XML format) of the temporary document.
+     *
+     * @var string
+     */
+    protected $tempDocumentContentTypes = "";
+
+    /**
+     * new inserted images list
+     *
+     * @var string[]
+     */
+    protected $tempDocumentNewImages = array();
+
+    /**
+     *
+     * @param string $documentTemplate The fully qualified template filename
      *
      * @throws \PhpOffice\PhpWord\Exception\CreateTemporaryFileException
      * @throws \PhpOffice\PhpWord\Exception\CopyFileException
@@ -141,9 +161,9 @@ class TemplateProcessor
      * @param string $xml
      * @param \XSLTProcessor $xsltProcessor
      *
-     * @return string
-     *
      * @throws \PhpOffice\PhpWord\Exception\Exception
+     *
+     * @return string
      */
     protected function transformSingleXml($xml, $xsltProcessor)
     {
@@ -188,8 +208,6 @@ class TemplateProcessor
      * @param \DOMDocument $xslDomDocument
      * @param array $xslOptions
      * @param string $xslOptionsUri
-     *
-     * @return void
      *
      * @throws \PhpOffice\PhpWord\Exception\Exception
      */
@@ -238,9 +256,7 @@ class TemplateProcessor
     /**
      * @param mixed $search
      * @param mixed $replace
-     * @param integer $limit
-     *
-     * @return void
+     * @param int $limit
      */
     public function setValue($search, $replace, $limit = self::MAXIMUM_REPLACEMENTS_DEFAULT)
     {
@@ -418,9 +434,7 @@ class TemplateProcessor
      * Clone a table row in a template document.
      *
      * @param string $search
-     * @param integer $numberOfClones
-     *
-     * @return void
+     * @param int $numberOfClones
      *
      * @throws \PhpOffice\PhpWord\Exception\Exception
      */
@@ -432,7 +446,7 @@ class TemplateProcessor
 
         $tagPos = strpos($this->tempDocumentMainPart, $search);
         if (!$tagPos) {
-            throw new Exception("Can not clone row, template variable not found or variable contains markup.");
+            throw new Exception('Can not clone row, template variable not found or variable contains markup.');
         }
 
         $rowStart = $this->findRowStart($tagPos);
@@ -477,8 +491,8 @@ class TemplateProcessor
      * Clone a block.
      *
      * @param string $blockname
-     * @param integer $clones
-     * @param boolean $replace
+     * @param int $clones
+     * @param bool $replace
      *
      * @return string|null
      */
@@ -515,8 +529,6 @@ class TemplateProcessor
      *
      * @param string $blockname
      * @param string $replacement
-     *
-     * @return void
      */
     public function replaceBlock($blockname, $replacement)
     {
@@ -539,8 +551,6 @@ class TemplateProcessor
      * Delete a block of text.
      *
      * @param string $blockname
-     *
-     * @return void
      */
     public function deleteBlock($blockname)
     {
@@ -550,9 +560,9 @@ class TemplateProcessor
     /**
      * Saves the result document.
      *
-     * @return string
-     *
      * @throws \PhpOffice\PhpWord\Exception\Exception
+     *
+     * @return string
      */
     public function save()
     {
@@ -597,8 +607,6 @@ class TemplateProcessor
      * @since 0.8.0
      *
      * @param string $fileName
-     *
-     * @return void
      */
     public function saveAs($fileName)
     {
@@ -622,7 +630,7 @@ class TemplateProcessor
      * Finds parts of broken macros and sticks them together.
      * Macros, while being edited, could be implicitly broken by some of the word processors.
      *
-     * @param string $documentPart The document part in XML representation.
+     * @param string $documentPart The document part in XML representation
      *
      * @return string
      */
@@ -647,7 +655,7 @@ class TemplateProcessor
      * @param mixed $search
      * @param mixed $replace
      * @param string $documentPartXML
-     * @param integer $limit
+     * @param int $limit
      *
      * @return string
      */
@@ -656,10 +664,10 @@ class TemplateProcessor
         // Note: we can't use the same function for both cases here, because of performance considerations.
         if (self::MAXIMUM_REPLACEMENTS_DEFAULT === $limit) {
             return str_replace($search, $replace, $documentPartXML);
-        } else {
-            $regExpEscaper = new RegExp();
-            return preg_replace($regExpEscaper->escape($search), $replace, $documentPartXML, $limit);
         }
+        $regExpEscaper = new RegExp();
+
+        return preg_replace($regExpEscaper->escape($search), $replace, $documentPartXML, $limit);
     }
 
     /**
@@ -679,7 +687,7 @@ class TemplateProcessor
     /**
      * Get the name of the header file for $index.
      *
-     * @param integer $index
+     * @param int $index
      *
      * @return string
      */
@@ -699,7 +707,7 @@ class TemplateProcessor
     /**
      * Get the name of the footer file for $index.
      *
-     * @param integer $index
+     * @param int $index
      *
      * @return string
      */
@@ -739,11 +747,11 @@ class TemplateProcessor
     /**
      * Find the start position of the nearest table row before $offset.
      *
-     * @param integer $offset
-     *
-     * @return integer
+     * @param int $offset
      *
      * @throws \PhpOffice\PhpWord\Exception\Exception
+     *
+     * @return int
      */
     protected function findRowStart($offset)
     {
@@ -762,9 +770,9 @@ class TemplateProcessor
     /**
      * Find the end position of the nearest table row after $offset.
      *
-     * @param integer $offset
+     * @param int $offset
      *
-     * @return integer
+     * @return int
      */
     protected function findRowEnd($offset)
     {
@@ -774,8 +782,8 @@ class TemplateProcessor
     /**
      * Get a slice of a string.
      *
-     * @param integer $startPosition
-     * @param integer $endPosition
+     * @param int $startPosition
+     * @param int $endPosition
      *
      * @return string
      */
