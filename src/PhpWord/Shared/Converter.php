@@ -11,7 +11,7 @@
  * contributors, visit https://github.com/PHPOffice/PHPWord/contributors.
  *
  * @see         https://github.com/PHPOffice/PHPWord
- * @copyright   2010-2017 PHPWord contributors
+ * @copyright   2010-2018 PHPWord contributors
  * @license     http://www.gnu.org/licenses/lgpl.txt LGPL version 3
  */
 
@@ -33,7 +33,7 @@ class Converter
     /**
      * Convert centimeter to twip
      *
-     * @param int $centimeter
+     * @param float $centimeter
      * @return float
      */
     public static function cmToTwip($centimeter = 1)
@@ -44,7 +44,7 @@ class Converter
     /**
      * Convert centimeter to inch
      *
-     * @param int $centimeter
+     * @param float $centimeter
      * @return float
      */
     public static function cmToInch($centimeter = 1)
@@ -55,7 +55,7 @@ class Converter
     /**
      * Convert centimeter to pixel
      *
-     * @param int $centimeter
+     * @param float $centimeter
      * @return float
      */
     public static function cmToPixel($centimeter = 1)
@@ -66,7 +66,7 @@ class Converter
     /**
      * Convert centimeter to point
      *
-     * @param int $centimeter
+     * @param float $centimeter
      * @return float
      */
     public static function cmToPoint($centimeter = 1)
@@ -77,8 +77,8 @@ class Converter
     /**
      * Convert centimeter to EMU
      *
-     * @param int $centimeter
-     * @return int
+     * @param float $centimeter
+     * @return float
      */
     public static function cmToEmu($centimeter = 1)
     {
@@ -88,8 +88,8 @@ class Converter
     /**
      * Convert inch to twip
      *
-     * @param int $inch
-     * @return int
+     * @param float $inch
+     * @return float
      */
     public static function inchToTwip($inch = 1)
     {
@@ -99,7 +99,7 @@ class Converter
     /**
      * Convert inch to centimeter
      *
-     * @param int $inch
+     * @param float $inch
      * @return float
      */
     public static function inchToCm($inch = 1)
@@ -110,8 +110,8 @@ class Converter
     /**
      * Convert inch to pixel
      *
-     * @param int $inch
-     * @return int
+     * @param float $inch
+     * @return float
      */
     public static function inchToPixel($inch = 1)
     {
@@ -121,8 +121,8 @@ class Converter
     /**
      * Convert inch to point
      *
-     * @param int $inch
-     * @return int
+     * @param float $inch
+     * @return float
      */
     public static function inchToPoint($inch = 1)
     {
@@ -132,8 +132,8 @@ class Converter
     /**
      * Convert inch to EMU
      *
-     * @param int $inch
-     * @return int
+     * @param float $inch
+     * @return float
      */
     public static function inchToEmu($inch = 1)
     {
@@ -144,7 +144,7 @@ class Converter
      * Convert pixel to twip
      *
      * @param int $pixel
-     * @return int
+     * @return float
      */
     public static function pixelToTwip($pixel = 1)
     {
@@ -188,7 +188,7 @@ class Converter
      * Convert point to twip unit
      *
      * @param int $point
-     * @return int
+     * @return float
      */
     public static function pointToTwip($point = 1)
     {
@@ -210,7 +210,7 @@ class Converter
      * Convert point to EMU
      *
      * @param int $point
-     * @return int
+     * @return float
      */
     public static function pointToEmu($point = 1)
     {
@@ -221,7 +221,7 @@ class Converter
      * Convert EMU to pixel
      *
      * @param int $emu
-     * @return int
+     * @return float
      */
     public static function emuToPixel($emu = 1)
     {
@@ -296,25 +296,40 @@ class Converter
      */
     public static function cssToPoint($value)
     {
-        preg_match('/^[+-]?([0-9]+.?[0-9]+)?(px|em|ex|%|in|cm|mm|pt|pc)$/i', $value, $matches);
-        $size = $matches[1];
-        $unit = $matches[2];
-
-        switch ($unit) {
-            case 'pt':
-                return $size;
-            case 'px':
-                return self::pixelToPoint($size);
-            case 'cm':
-                return self::cmToPoint($size);
-            case 'mm':
-                return self::cmToPoint($size / 10);
-            case 'in':
-                return self::inchToPoint($size);
-            case 'pc':
-                return self::picaToPoint($size);
-            default:
-                return null;
+        if ($value == '0') {
+            return 0;
         }
+        if (preg_match('/^[+-]?([0-9]+\.?[0-9]*)?(px|em|ex|%|in|cm|mm|pt|pc)$/i', $value, $matches)) {
+            $size = $matches[1];
+            $unit = $matches[2];
+
+            switch ($unit) {
+                case 'pt':
+                    return $size;
+                case 'px':
+                    return self::pixelToPoint($size);
+                case 'cm':
+                    return self::cmToPoint($size);
+                case 'mm':
+                    return self::cmToPoint($size / 10);
+                case 'in':
+                    return self::inchToPoint($size);
+                case 'pc':
+                    return self::picaToPoint($size);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Transforms a size in CSS format (eg. 10px, 10px, ...) to twips
+     *
+     * @param string $value
+     * @return float
+     */
+    public static function cssToTwip($value)
+    {
+        return self::pointToTwip(self::cssToPoint($value));
     }
 }
