@@ -92,26 +92,8 @@ class TemplateProcessor
     protected $tempDocumentNewImages = array();
 
     /**
+     * @since 0.12.0 Throws CreateTemporaryFileException and CopyFileException instead of Exception
      *
-     * @var string[]
-     */
-    protected $tempDocumentRelations = array();
-
-    /**
-     * Document content types (in XML format) of the temporary document.
-     *
-     * @var string
-     */
-    protected $tempDocumentContentTypes = '';
-
-    /**
-     * new inserted images list
-     *
-     * @var string[]
-     */
-    protected $tempDocumentNewImages = array();
-
-    /**
      * @param string $documentTemplate The fully qualified template filename
      *
      * @throws \PhpOffice\PhpWord\Exception\CreateTemporaryFileException
@@ -353,130 +335,6 @@ class TemplateProcessor
 
     /**
      * Set values from a one-dimensional array of "variable => value"-pairs.
-     * @param mixed $replace Path to image, or array("path" => xx, "width" => yy, "height" => zz)
-     * @param int $limit
-     */
-    public function setImageValue($search, $replace, $limit = self::MAXIMUM_REPLACEMENTS_DEFAULT)
-    {
-        // prepare $search_replace
-        if (!is_array($search)) {
-            $search = array($search);
-        }
-
-        $replacesList = array();
-        if (!is_array($replace) || isset($replace['path'])) {
-            $replacesList[] = $replace;
-        } else {
-            $replacesList = array_values($replace);
-        }
-
-        $searchReplace = array();
-        foreach ($search as $searchIdx => $searchString) {
-            $searchReplace[$searchString] = isset($replacesList[$searchIdx]) ? $replacesList[$searchIdx] : $replacesList[0];
-        }
-
-        // define templates
-        // result can be verified via "Open XML SDK 2.5 Productivity Tool" (http://www.microsoft.com/en-us/download/details.aspx?id=30425)
-        $imgTpl = '<w:pict><v:shape type="#_x0000_t75" style="width:{WIDTH}px;height:{HEIGHT}px"><v:imagedata r:id="{RID}" o:title=""/></v:shape></w:pict>';
-        $typeTpl = '<Override PartName="/word/media/{IMG}" ContentType="image/{EXT}"/>';
-        $relationTpl = '<Relationship Id="{RID}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/{IMG}"/>';
-        $newRelationsTpl = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>' . "\n" . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"></Relationships>';
-        $newRelationsTypeTpl = '<Override PartName="/{RELS}" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>';
-        $extTransform = array(
-                            'jpg' => 'jpeg',
-                            'JPG' => 'jpeg',
-                            'png' => 'png',
-                            'PNG' => 'png',
-                            );
-
-        $searchParts = array(
-                            $this->getMainPartName() => &$this->tempDocumentMainPart,
-                            );
-        foreach (array_keys($this->tempDocumentHeaders) as $headerIndex) {
-            $searchParts[$this->getHeaderName($headerIndex)] = &$this->tempDocumentHeaders[$headerIndex];
-        }
-        foreach (array_keys($this->tempDocumentFooters) as $headerIndex) {
-            $searchParts[$this->getFooterName($headerIndex)] = &$this->tempDocumentFooters[$headerIndex];
-        }
-
-        foreach ($searchParts as $partFileName => &$partContent) {
-            $partVariables = $this->getVariablesForPart($partContent);
-
-            $partSearchReplaces = array();
-            foreach ($searchReplace as $search => $replace) {
-                if (!in_array($search, $partVariables)) {
-                    continue;
-                }
-
-                // get image path and size
-                $width = 115;
-                $height = 70;
-                if (is_array($replace) && isset($replace['path'])) {
-                    $imgPath = $replace['path'];
-                    if (isset($replace['width'])) {
-                        $width = $replace['width'];
-                    }
-                    if (isset($replace['height'])) {
-                        $height = $replace['height'];
-                    }
-                } else {
-                    $imgPath = $replace;
-                }
-
-                // get image index
-                $imgIndex = $this->getNextRelationsIndex($partFileName);
-                $rid = 'rId' . $imgIndex;
-
-                // get image embed name
-                if (isset($this->tempDocumentNewImages[$imgPath])) {
-                    $imgName = $this->tempDocumentNewImages[$imgPath];
-                } else {
-                    // transform extension
-                    $imgExt = pathinfo($imgPath, PATHINFO_EXTENSION);
-                    if (isset($extTransform)) {
-                        $imgExt = $extTransform[$imgExt];
-                    }
-
-                    // add image to document
-                    $imgName = 'image' . $imgIndex . '_' . pathinfo($partFileName, PATHINFO_FILENAME) . '.' . $imgExt;
-                    $this->zipClass->pclzipAddFile($imgPath, 'word/media/' . $imgName);
-                    $this->tempDocumentNewImages[$imgPath] = $imgName;
-
-                    // setup type for image
-                    $xmlImageType = str_replace(array('{IMG}', '{EXT}'), array($imgName, $imgExt), $typeTpl);
-                    $this->tempDocumentContentTypes = str_replace('</Types>', $xmlImageType, $this->tempDocumentContentTypes) . '</Types>';
-                }
-
-                $xmlImage = str_replace(array('{RID}', '{WIDTH}', '{HEIGHT}'), array($rid, $width, $height), $imgTpl);
-                $xmlImageRelation = str_replace(array('{RID}', '{IMG}'), array($rid, $imgName), $relationTpl);
-
-                if (!isset($this->tempDocumentRelations[$partFileName])) {
-                    // create new relations file
-                    $this->tempDocumentRelations[$partFileName] = $newRelationsTpl;
-                    // and add it to content types
-                    $xmlRelationsType = str_replace('{RELS}', $this->getRelationsName($partFileName), $newRelationsTypeTpl);
-                    $this->tempDocumentContentTypes = str_replace('</Types>', $xmlRelationsType, $this->tempDocumentContentTypes) . '</Types>';
-                }
-
-                // add image to relations
-                $this->tempDocumentRelations[$partFileName] = str_replace('</Relationships>', $xmlImageRelation, $this->tempDocumentRelations[$partFileName]) . '</Relationships>';
-
-                // collect prepared replaces
-                //$partSearchReplaces["<w:t>".self::ensureMacroCompleted($search)."</w:t>"] = $xmlImage;
-                $search = self::ensureMacroCompleted($search);
-                $matches = array();
-                if (preg_match('/<[^<]+' . preg_quote($search) . '[^>]+>/u', $partContent, $matches)) {
-                    $partSearchReplaces[$matches[0]] = $xmlImage;
-                }
-            }
-
-            if ($partSearchReplaces) {
-                $partContent = $this->setValueForPart(array_keys($partSearchReplaces), $partSearchReplaces, $partContent, $limit);
-            }
-        }
-    }
-
-    /**
      *
      * @param array $values
      */
@@ -1130,36 +988,6 @@ class TemplateProcessor
     protected function getFooterName($index)
     {
         return sprintf('word/footer%d.xml', $index);
-    }
-
-    /**
-     * Get the name of the relations file for document part.
-     *
-     * @param string $docuemntPartName
-     * @param mixed $documentPartName
-     *
-     * @return string
-     */
-    protected function getRelationsName($documentPartName)
-    {
-        return 'word/_rels/' . pathinfo($documentPartName, PATHINFO_BASENAME) . '.rels';
-    }
-
-    protected function getNextRelationsIndex($documentPartName)
-    {
-        if (isset($this->tempDocumentRelations[$documentPartName])) {
-            return substr_count($this->tempDocumentRelations[$documentPartName], '<Relationship');
-        }
-
-        return 1;
-    }
-
-    /**
-     * @return string
-     */
-    protected function getDocumentContentTypesName()
-    {
-        return '[Content_Types].xml';
     }
 
     /**
